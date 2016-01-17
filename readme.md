@@ -1,5 +1,7 @@
 # go-observable
 
+[![Build Status](https://travis-ci.org/GianlucaGuarini/go-observable.svg?branch=master)](https://travis-ci.org/GianlucaGuarini/go-observable)
+
 Golang script heavily inspired to [riot-observable](https://github.com/riot/observable)
 
 It allows you to send and receive events with a tiny simple API
