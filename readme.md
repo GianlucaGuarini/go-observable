@@ -1,6 +1,7 @@
 # go-observable
 
-Golang library heavily inspired to [riot-observable](https://github.com/riot/observable)
+Golang script heavily inspired to [riot-observable](https://github.com/riot/observable)
+
 It allows you to send and receive events with a tiny simple API
 
 ## Installation
