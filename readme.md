@@ -1,8 +1,7 @@
 # go-observable
 
 Golang library heavily inspired to [riot-observable](https://github.com/riot/observable)
-
-It allows to send and receive events with a tiny simple API
+It allows you to send and receive events with a tiny simple API
 
 ## Installation
 
@@ -58,13 +57,10 @@ o.One("ready", func(){
 Call all the callbacks subscribed to a certain event
 
 ```go
-
 o.On("message", func(message string){
   // do something with the message
 })
-
 o.Trigger("message", "Hello There!")
-
 ```
 
 
