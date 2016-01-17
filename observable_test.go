@@ -1,7 +1,7 @@
 package observable_test
 
 import (
-  "github.com/gianlucaguarini/go-observable"
+  "github.com/GianlucaGuarini/go-observable"
   "testing"
   "time"
 )
