@@ -104,3 +104,26 @@ func TestTrigger(t *testing.T) {
   // the trigger without any listener should not throw errors
   o.Trigger("foo")
 }
+
+/**
+ * Speed Benchmarks
+ */
+
+var eventsList = []string{"foo", "bar", "baz", "boo"}
+
+func BenchmarkOnTrigger(b *testing.B) {
+  o := observable.New()
+  n := 0
+
+  for _, e := range eventsList {
+    o.On(e, func() {
+      n++
+    })
+  }
+
+  for i := 0; i < b.N; i++ {
+    for _, e := range eventsList {
+      o.Trigger(e)
+    }
+  }
+}
