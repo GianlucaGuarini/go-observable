@@ -34,11 +34,16 @@ func (o *Observable) On(event string, fn interface{}) *Observable {
 
 // Trigger - a particular event passing custom arguments
 func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
-  arguments := make([]reflect.Value, len(params))
-  for key, param := range params {
-    arguments[key] = reflect.ValueOf(param)
+
+  // check if the observable has already created this events map
+  if o.hasEvent(event) {
+    arguments := make([]reflect.Value, len(params))
+    for key, param := range params {
+      arguments[key] = reflect.ValueOf(param)
+    }
+    o.argumentsCh[event] <- arguments
   }
-  o.argumentsCh[event] <- arguments
+
   return o
 }
 

@@ -27,7 +27,7 @@ func (o *Observable) listen(argumentsCh chan []reflect.Value, doneCh chan int, e
 
 func (o *Observable) addCallback(event string, fn interface{}, isOne bool) {
 
-  if _, ok := o.Callbacks[event]; !ok {
+  if !o.hasEvent(event) {
 
     o.Callbacks[event] = make([]callback, 1)
     o.argumentsCh[event] = make(chan []reflect.Value)
@@ -39,4 +39,9 @@ func (o *Observable) addCallback(event string, fn interface{}, isOne bool) {
   } else {
     o.Callbacks[event] = append(o.Callbacks[event], callback{reflect.ValueOf(fn), isOne, false})
   }
+}
+
+func (o *Observable) hasEvent(event string) bool {
+  _, ok := o.Callbacks[event]
+  return ok
 }

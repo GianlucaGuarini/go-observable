@@ -98,3 +98,9 @@ func TestArguments(t *testing.T) {
     t.Errorf("The counter is %d instead of being %d", n, 1)
   }
 }
+
+func TestTrigger(t *testing.T) {
+  o := observable.New()
+  // the trigger without any listener should not throw errors
+  o.Trigger("foo")
+}
