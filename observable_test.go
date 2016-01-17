@@ -23,7 +23,7 @@ func TestOn(t *testing.T) {
 
   o.Trigger("foo").Trigger("foo").Trigger("bar")
 
-  // wait one second before ending it
+  // wait.. this test is aync
   time.Sleep(TEST_DELAY)
 
   if n != 5 {
@@ -50,7 +50,7 @@ func TestOff(t *testing.T) {
 
   o.Trigger("foo")
 
-  // wait one second before ending it
+  // wait.. this test is aync
   time.Sleep(TEST_DELAY)
 
   if n != 1 {
@@ -71,7 +71,7 @@ func TestOne(t *testing.T) {
 
   o.Trigger("foo").Trigger("foo").Trigger("foo")
 
-  // wait one second before ending it
+  // wait.. this test is aync
   time.Sleep(TEST_DELAY)
 
   if n != 1 {
@@ -91,7 +91,7 @@ func TestArguments(t *testing.T) {
   })
 
   o.Trigger("foo", true, "bar")
-  // wait one second before ending it
+  // wait.. this test is aync
   time.Sleep(TEST_DELAY)
 
   if n != 1 {
