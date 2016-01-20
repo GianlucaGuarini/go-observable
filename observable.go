@@ -4,6 +4,21 @@ import (
   "reflect"
 )
 
+// Helpers
+func (o *Observable) addCallback(event string, fn interface{}, isOne bool) {
+  if !o.hasEvent(event) {
+    o.Callbacks[event] = make([]callback, 1)
+    o.Callbacks[event][0] = callback{reflect.ValueOf(fn), isOne, false}
+  } else {
+    o.Callbacks[event] = append(o.Callbacks[event], callback{reflect.ValueOf(fn), isOne, false})
+  }
+}
+
+func (o *Observable) hasEvent(event string) bool {
+  _, ok := o.Callbacks[event]
+  return ok
+}
+
 type callback struct {
   fn        reflect.Value
   isOne     bool
@@ -12,17 +27,13 @@ type callback struct {
 
 // Observable struct
 type Observable struct {
-  Callbacks   map[string][]callback
-  argumentsCh map[string]chan []reflect.Value
-  doneCh      map[string]chan int
+  Callbacks map[string][]callback
 }
 
 // New - returns a observable struct
 func New() *Observable {
   return &Observable{
     make(map[string][]callback),
-    make(map[string]chan []reflect.Value),
-    make(map[string]chan int),
   }
 }
 
@@ -41,7 +52,17 @@ func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
     for key, param := range params {
       arguments[key] = reflect.ValueOf(param)
     }
-    o.argumentsCh[event] <- arguments
+
+    for i, cb := range o.Callbacks[event] {
+      if cb.isOne && !cb.wasCalled || !cb.isOne {
+        cb.fn.Call(arguments)
+      }
+      if cb.isOne {
+        o.Off(event, o.Callbacks[event][i])
+      }
+      o.Callbacks[event][i].wasCalled = true
+
+    }
   }
 
   return o
@@ -59,10 +80,7 @@ func (o *Observable) Off(event string, fn interface{}) *Observable {
   }
 
   if len(o.Callbacks[event]) == 0 {
-    o.doneCh[event] <- 1
     delete(o.Callbacks, event)
-    delete(o.doneCh, event)
-    delete(o.argumentsCh, event)
   }
 
   return o
