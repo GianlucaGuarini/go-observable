@@ -1,10 +1,9 @@
 package observable
 
-import (
-  "reflect"
-)
+import "reflect"
 
 // Helpers
+
 func (o *Observable) addCallback(event string, fn interface{}, isOne bool) {
   if !o.hasEvent(event) {
     o.Callbacks[event] = make([]callback, 1)
@@ -19,6 +18,8 @@ func (o *Observable) hasEvent(event string) bool {
   return ok
 }
 
+// Structs
+
 type callback struct {
   fn        reflect.Value
   isOne     bool
@@ -29,6 +30,8 @@ type callback struct {
 type Observable struct {
   Callbacks map[string][]callback
 }
+
+// Public API
 
 // New - returns a observable struct
 func New() *Observable {
@@ -61,7 +64,6 @@ func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
         o.Off(event, o.Callbacks[event][i])
       }
       o.Callbacks[event][i].wasCalled = true
-
     }
   }
 
