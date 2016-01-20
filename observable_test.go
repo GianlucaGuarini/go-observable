@@ -23,9 +23,6 @@ func TestOn(t *testing.T) {
 
   o.Trigger("foo").Trigger("foo").Trigger("bar")
 
-  // wait.. this test is aync
-  time.Sleep(TEST_DELAY)
-
   if n != 5 {
     t.Errorf("The counter is %d instead of being %d", n, 5)
   }
@@ -50,9 +47,6 @@ func TestOff(t *testing.T) {
 
   o.Trigger("foo")
 
-  // wait.. this test is aync
-  time.Sleep(TEST_DELAY)
-
   if n != 1 {
     t.Errorf("The counter is %d instead of being %d", n, 1)
   }
@@ -70,9 +64,6 @@ func TestOne(t *testing.T) {
   o.One("foo", onFoo)
 
   o.Trigger("foo").Trigger("foo").Trigger("foo")
-
-  // wait.. this test is aync
-  time.Sleep(TEST_DELAY)
 
   if n != 1 {
     t.Errorf("The counter is %d instead of being %d", n, 1)
