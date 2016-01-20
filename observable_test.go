@@ -3,10 +3,7 @@ package observable_test
 import (
   "github.com/GianlucaGuarini/go-observable"
   "testing"
-  "time"
 )
-
-const TEST_DELAY = time.Second / 10
 
 func TestOn(t *testing.T) {
 
@@ -82,8 +79,6 @@ func TestArguments(t *testing.T) {
   })
 
   o.Trigger("foo", true, "bar")
-  // wait.. this test is aync
-  time.Sleep(TEST_DELAY)
 
   if n != 1 {
     t.Errorf("The counter is %d instead of being %d", n, 1)
