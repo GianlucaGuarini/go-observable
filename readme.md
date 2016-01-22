@@ -42,13 +42,14 @@ o.On("stop error", func(args ...interface{}) {
 ```
 
 By using the `*` namespace you will be able to listen all the observable events
-__IMPORTANT__
+
+__IMPORTANT__<br/>
 If you pass arguments to your listeners you should add them also to this listener
 as well
 
 ```go
 o.On("*", func(args ...interface{}) {
-  // args[0] here will be any string passed to the listeners
+  // args[0] here will be the event key called in the Trigger method
   // in this case "stop" and "start"
 })
 o.Trigger("stop").Trigger("start")
