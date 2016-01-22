@@ -31,14 +31,90 @@ func TestOnTriggerMultipleEvensString(t *testing.T) {
   o := observable.New()
   n := 0
 
-  o.On("foo bar", func() {
+  var lastEvt string
+
+  o.On("foo bar", func(eventName string) {
+    lastEvt = eventName
     n++
   })
 
   o.Trigger("foo bar").Trigger("bar foo")
 
+  if lastEvt != "foo" {
+    t.Errorf("The last event name triggered is %s instead of being %s", lastEvt, "foo")
+  }
+
   if n != 4 {
     t.Errorf("The counter is %d instead of being %d", n, 4)
+  }
+}
+
+func TestOffMultipleEvensString(t *testing.T) {
+  o := observable.New()
+  n := 0
+
+  increment := func() {
+    n++
+  }
+
+  o.On("foo bar", increment).On("baz", increment)
+
+  o.Off("foo bar baz", increment)
+
+  o.Trigger("foo bar baz")
+
+  if n != 0 {
+    t.Errorf("The counter is %d instead of being %d", n, 0)
+  }
+
+}
+
+func TestOnAll(t *testing.T) {
+  o := observable.New()
+  n := 0
+  var lastEvt string
+
+  onAll := func(eventName string) {
+    lastEvt = eventName
+    n++
+  }
+
+  o.On("*", onAll)
+
+  o.Trigger("foo bar").Trigger("foo").Trigger("bar")
+
+  o.Off("*", onAll)
+
+  o.Trigger("foo bar").Trigger("foo")
+
+  if lastEvt != "bar" {
+    t.Errorf("The last event name triggered is %s instead of being %s", lastEvt, "bar")
+  }
+
+  if n != 3 {
+    t.Errorf("The counter is %d instead of being %d", n, 3)
+  }
+
+}
+
+func TestOffAll(t *testing.T) {
+  o := observable.New()
+  n := 0
+
+  o.On("foo", func() {
+    n++
+  })
+
+  o.On("bar", func() {
+    n++
+  })
+
+  o.Off("*")
+
+  o.Trigger("foo").Trigger("bar").Trigger("foo bar")
+
+  if n != 0 {
+    t.Errorf("The counter is %d instead of being %d", n, 0)
   }
 }
 
