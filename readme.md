@@ -32,6 +32,14 @@ o.On("ready", func() {
 })
 ```
 
+You can subscribe your observable also to multiple events for example:
+
+```go
+o.On("stop error", func() {
+  // I will run in case the "error" or the "stop" event will be dispatched
+})
+```
+
 ### Off(event string, fn interface{})
 
 Unsubscribe a callback from an event key

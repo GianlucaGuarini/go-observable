@@ -1,18 +1,35 @@
 package observable
 
-import "reflect"
+import (
+  "reflect"
+  "strings"
+  "sync"
+)
 
 // Helpers
 
-func (o *Observable) addCallback(event string, fn interface{}, isOne bool) {
-  if !o.hasEvent(event) {
-    o.Callbacks[event] = make([]callback, 1)
-    o.Callbacks[event][0] = callback{reflect.ValueOf(fn), isOne, false}
-  } else {
-    o.Callbacks[event] = append(o.Callbacks[event], callback{reflect.ValueOf(fn), isOne, false})
+// Add a callback under a certain event namespace
+func (o *Observable) addCallback(event string, cb interface{}, isUnique bool) *Observable {
+  fn := reflect.ValueOf(cb)
+
+  events := strings.Fields(event)
+
+  for _, s := range events {
+    o.Lock()
+    // does this namespace already exist?
+    if !o.hasEvent(s) {
+      o.Callbacks[s] = make([]callback, 1)
+      o.Callbacks[s][0] = callback{fn, isUnique, false}
+    } else {
+      o.Callbacks[s] = append(o.Callbacks[s], callback{fn, isUnique, false})
+    }
+    o.Unlock()
   }
+
+  return o
 }
 
+// check whether the Observable struct has already registered the event namespace
 func (o *Observable) hasEvent(event string) bool {
   _, ok := o.Callbacks[event]
   return ok
@@ -20,50 +37,64 @@ func (o *Observable) hasEvent(event string) bool {
 
 // Structs
 
+// private struct
 type callback struct {
   fn        reflect.Value
-  isOne     bool
+  isUnique  bool
   wasCalled bool
 }
 
-// Observable struct
+// Public Observable struct
 type Observable struct {
   Callbacks map[string][]callback
+  *sync.RWMutex
 }
 
 // Public API
 
-// New - returns a observable struct
+// New - returns a new observable reference
 func New() *Observable {
   return &Observable{
     make(map[string][]callback),
+    &sync.RWMutex{},
   }
 }
 
 // On - adds a callback function
-func (o *Observable) On(event string, fn interface{}) *Observable {
-  o.addCallback(event, fn, false)
-  return o
+func (o *Observable) On(event string, cb interface{}) *Observable {
+  return o.addCallback(event, cb, false)
 }
 
 // Trigger - a particular event passing custom arguments
 func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
 
-  // check if the observable has already created this events map
-  if o.hasEvent(event) {
-    arguments := make([]reflect.Value, len(params))
-    for key, param := range params {
-      arguments[key] = reflect.ValueOf(param)
-    }
+  o.Lock()
+  defer o.Unlock()
 
-    for i, cb := range o.Callbacks[event] {
-      if cb.isOne && !cb.wasCalled || !cb.isOne {
-        cb.fn.Call(arguments)
+  // get the arguments we want to pass to our listeners callbaks
+  arguments := make([]reflect.Value, len(params))
+  events := strings.Fields(event)
+
+  for key, param := range params {
+    arguments[key] = reflect.ValueOf(param)
+  }
+
+  for _, s := range events {
+    // check if the observable has already created this events map
+    if o.hasEvent(s) {
+
+      // loop all the callbacks
+      // avoiding to call twice the ones registered with Observable.One
+      for i, cb := range o.Callbacks[s] {
+        if !cb.isUnique || cb.isUnique && !cb.wasCalled {
+          cb.fn.Call(arguments)
+        }
+        // kill the callbacks registered with one
+        if cb.isUnique {
+          o.Off(s, o.Callbacks[s][i])
+        }
+        o.Callbacks[s][i].wasCalled = true
       }
-      if cb.isOne {
-        o.Off(event, o.Callbacks[event][i])
-      }
-      o.Callbacks[event][i].wasCalled = true
     }
   }
 
@@ -73,14 +104,20 @@ func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
 // Off - stop listening a particular event
 func (o *Observable) Off(event string, fn interface{}) *Observable {
 
+  // try to get the value of the function we want unsubscribe
   fn = reflect.ValueOf(fn)
 
+  // loop all the callbacks registered under the event namespace
   for i, cb := range o.Callbacks[event] {
     if fn == cb.fn {
+      o.Lock()
       o.Callbacks[event] = append(o.Callbacks[event][:i], o.Callbacks[event][i+1:]...)
+      o.Unlock()
     }
   }
 
+  // if there are no more callbacks using this namespace
+  // delete the key from the map
   if len(o.Callbacks[event]) == 0 {
     delete(o.Callbacks, event)
   }
@@ -89,7 +126,6 @@ func (o *Observable) Off(event string, fn interface{}) *Observable {
 }
 
 // One - call the callback only once
-func (o *Observable) One(event string, fn interface{}) *Observable {
-  o.addCallback(event, fn, true)
-  return o
+func (o *Observable) One(event string, cb interface{}) *Observable {
+  return o.addCallback(event, cb, true)
 }

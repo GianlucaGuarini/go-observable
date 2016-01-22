@@ -2,6 +2,7 @@ package observable_test
 
 import (
   "github.com/GianlucaGuarini/go-observable"
+  "sync"
   "testing"
 )
 
@@ -26,6 +27,21 @@ func TestOn(t *testing.T) {
 
 }
 
+func TestOnTriggerMultipleEvensString(t *testing.T) {
+  o := observable.New()
+  n := 0
+
+  o.On("foo bar", func() {
+    n++
+  })
+
+  o.Trigger("foo bar").Trigger("bar foo")
+
+  if n != 4 {
+    t.Errorf("The counter is %d instead of being %d", n, 4)
+  }
+}
+
 func TestOff(t *testing.T) {
   o := observable.New()
   n := 0
@@ -46,6 +62,37 @@ func TestOff(t *testing.T) {
 
   if n != 1 {
     t.Errorf("The counter is %d instead of being %d", n, 1)
+  }
+
+}
+
+func TestRace(t *testing.T) {
+
+  o := observable.New()
+  n := 0
+
+  asyncTask := func(wg *sync.WaitGroup) {
+    o.Trigger("foo")
+    wg.Done()
+  }
+  var wg sync.WaitGroup
+
+  wg.Add(5)
+
+  o.On("foo", func() {
+    n++
+  })
+
+  go asyncTask(&wg)
+  go asyncTask(&wg)
+  go asyncTask(&wg)
+  go asyncTask(&wg)
+  go asyncTask(&wg)
+
+  wg.Wait()
+
+  if n != 5 {
+    t.Errorf("The counter is %d instead of being %d", n, 5)
   }
 
 }
