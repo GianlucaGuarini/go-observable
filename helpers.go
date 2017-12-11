@@ -36,24 +36,21 @@ func (o *Observable) removeEvent(event string, fn interface{}) {
   // try to get the value of the function we want unsubscribe
   fn = reflect.ValueOf(fn)
 
+  o.Lock()
   for _, s := range events {
     // loop all the callbacks registered under the event namespace
     for i, cb := range o.Callbacks[s] {
       if fn == cb.fn {
-        o.Lock()
         o.Callbacks[s] = append(o.Callbacks[s][:i], o.Callbacks[s][i+1:]...)
-        o.Unlock()
       }
     }
-
     // if there are no more callbacks using this namespace
     // delete the key from the map
     if len(o.Callbacks[event]) == 0 {
-      o.Lock()
       delete(o.Callbacks, event)
-      o.Unlock()
     }
   }
+  o.Unlock()
 
 }
 
