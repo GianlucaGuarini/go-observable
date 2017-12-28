@@ -1,6 +1,7 @@
 # go-observable
 
 [![Build Status](https://travis-ci.org/GianlucaGuarini/go-observable.svg?branch=master)](https://travis-ci.org/GianlucaGuarini/go-observable)
+[![Coverage Status](https://coveralls.io/repos/github/GianlucaGuarini/go-observable/badge.svg?branch=master)](https://coveralls.io/github/GianlucaGuarini/go-observable?branch=master)
 
 Golang script heavily inspired to [riot-observable](https://github.com/riot/observable)
 
