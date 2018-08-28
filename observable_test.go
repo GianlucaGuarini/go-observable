@@ -53,9 +53,9 @@ func TestOffMultipleEvensString(t *testing.T) {
   o := observable.New()
   n := 0
 
-  increment := func() {
-    n++
-  }
+	increment := func(args ...interface{}) {
+		n++
+	}
 
   o.On("foo bar", increment).On("baz", increment)
 
