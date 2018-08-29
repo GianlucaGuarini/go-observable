@@ -41,6 +41,8 @@ func (o *Observable) On(event string, cb interface{}) *Observable {
 
 // Trigger - a particular event passing custom arguments
 func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
+	o.Lock()
+	defer o.Unlock()
 
   // get the arguments we want to pass to our listeners callbaks
   arguments := make([]reflect.Value, len(params))
@@ -62,13 +64,17 @@ func (o *Observable) Trigger(event string, params ...interface{}) *Observable {
 
 // Off - stop listening a particular event
 func (o *Observable) Off(event string, args ...interface{}) *Observable {
+	o.Lock()
+	defer o.Unlock()
+	return o.offNoSync(event, args...)
+}
 
+/// Ditto, necessary for internal calls
+func (o *Observable) offNoSync(event string, args ...interface{}) *Observable {
   if len(args) == 0 {
     // wipe all the event listeners
     if event == ALL_EVENTS_NAMESPACE {
-      o.Lock()
       o.Callbacks = make(map[string][]callback)
-      o.Unlock()
     }
   } else if len(args) == 1 {
     o.removeEvent(event, args[0])

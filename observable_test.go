@@ -4,6 +4,7 @@ import (
   "github.com/GianlucaGuarini/go-observable"
   "sync"
   "testing"
+  "time"
 )
 
 func TestOn(t *testing.T) {
@@ -53,9 +54,9 @@ func TestOffMultipleEvensString(t *testing.T) {
   o := observable.New()
   n := 0
 
-  increment := func() {
-    n++
-  }
+	increment := func(args ...interface{}) {
+		n++
+	}
 
   o.On("foo bar", increment).On("baz", increment)
 
@@ -235,4 +236,41 @@ func BenchmarkOnTrigger(b *testing.B) {
       o.Trigger(e)
     }
   }
+}
+
+/**
+Test using `On` / `defer Off` and `Trigger` concurrently
+
+One useful pattern (for SSE, Server Send Event) is to have code code that does `Trigger`
+events and a server handler that turns the event `On` / `Off` on disconnection.
+However this can lead to a race condition as `Trigger` and `On`/`Off` are not currently
+synchronized.
+*/
+func TestOnOffTriggerConcurrency(b *testing.T) {
+	o := observable.New()
+
+	waiter := make(chan struct{})
+
+	// This is called synchronously
+	observerFunc := func(args ...interface{}) {
+		time.Sleep(7 * time.Millisecond)
+	}
+
+	// Our "http listener" accepts many connections
+	// This test can accidentally pass, but it cannot accidentally fail
+	go func() {
+		<-waiter
+		for i := 0; i < 100; i++ {
+			o.On("baguette", observerFunc)
+			time.Sleep(10 * time.Millisecond)
+			o.Off("baguette")
+		}
+	}()
+
+	// Does not exists yet
+	o.Trigger("baguette")
+	waiter <- struct{}{}
+	for i := 0; i < 150; i++ {
+		o.Trigger("baguette")
+	}
 }

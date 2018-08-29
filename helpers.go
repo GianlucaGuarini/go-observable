@@ -9,13 +9,14 @@ import (
 
 // Add a callback under a certain event namespace
 func (o *Observable) addCallback(event string, cb interface{}, isUnique bool) *Observable {
+	o.Lock()
+	defer o.Unlock()
 
   fn := reflect.ValueOf(cb)
   events := strings.Fields(event)
   isTyped := len(events) > 1
 
   for _, s := range events {
-    o.Lock()
     // does this namespace already exist?
     if !o.hasEvent(s) {
       o.Callbacks[s] = make([]callback, 1)
@@ -23,7 +24,6 @@ func (o *Observable) addCallback(event string, cb interface{}, isUnique bool) *O
     } else {
       o.Callbacks[s] = append(o.Callbacks[s], callback{fn, isUnique, isTyped, false})
     }
-    o.Unlock()
   }
 
   return o
@@ -31,6 +31,7 @@ func (o *Observable) addCallback(event string, cb interface{}, isUnique bool) *O
 
 // remove the events bound to the callback
 func (o *Observable) removeEvent(event string, fn interface{}) {
+	// Locking is performed by the public function (`Off`)
 
   events := strings.Fields(event)
   // try to get the value of the function we want unsubscribe
@@ -40,28 +41,21 @@ func (o *Observable) removeEvent(event string, fn interface{}) {
     // loop all the callbacks registered under the event namespace
     for i, cb := range o.Callbacks[s] {
       if fn == cb.fn {
-        o.Lock()
         o.Callbacks[s] = append(o.Callbacks[s][:i], o.Callbacks[s][i+1:]...)
-        o.Unlock()
       }
     }
 
     // if there are no more callbacks using this namespace
     // delete the key from the map
     if len(o.Callbacks[event]) == 0 {
-      o.Lock()
       delete(o.Callbacks, event)
-      o.Unlock()
     }
   }
-
 }
 
 // dispatch the events using custom arguments
 func (o *Observable) dispatchEvent(event string, arguments []reflect.Value) *Observable {
-  // lock the struct
-  o.Lock()
-  defer o.Unlock()
+	// locking is performed by the caller as it might call `hasEvent`
 
   // get all the list of events space separated
   events := strings.Fields(event)
@@ -85,7 +79,7 @@ func (o *Observable) dispatchEvent(event string, arguments []reflect.Value) *Obs
         }
         // kill the callbacks registered with one
         if cb.isUnique {
-          o.Off(s, o.Callbacks[s][i])
+          o.offNoSync(s, o.Callbacks[s][i])
         }
 
         o.Callbacks[s][i].wasCalled = true
